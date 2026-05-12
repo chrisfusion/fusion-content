@@ -1,0 +1,17 @@
+fusion-content has been deployed.
+
+Service: fusion-content.{{ .Values.namespace }}.svc.cluster.local:8080
+
+Endpoints:
+  GET /api/v1/changelog              — merged changelog (paginated)
+  GET /api/v1/changelog?project=X    — filter by project name
+  GET /api/v1/changelog?date=X       — filter by date ("unreleased" or "YYYY-MM-DD")
+  GET /q/health/live                 — liveness probe
+  GET /q/health/ready                — readiness probe
+
+Port-forward for local testing:
+  kubectl port-forward -n {{ .Values.namespace }} service/fusion-content 18082:8080 --address 127.0.0.1
+
+Auth: {{ if .Values.auth.enabled }}ENABLED (K8s SA TokenReview){{ else }}DISABLED (all requests allowed){{ end }}
+Poll interval: {{ .Values.server.config.pollInterval }}
+Repos config: {{ if .Values.repos.existingSecret }}from existing secret "{{ .Values.repos.existingSecret }}"{{ else }}from chart-generated secret "{{ .Release.Name }}-repos"{{ end }}

@@ -1,0 +1,96 @@
+# Go binaries and test artifacts
+bin/
+*.exe
+*.test
+coverage.out
+coverage.html
+*.out
+
+# Go workspace (local multi-module dev)
+go.work
+go.work.sum
+
+# IDE — IntelliJ / GoLand
+.idea/
+*.iml
+
+# IDE — VS Code
+.vscode/
+
+# IDE — Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+
+# IDE — Vim / Neovim
+*.swp
+*.swo
+.netrwhist
+Session.vim
+.nvim/
+
+# IDE — Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# IDE — Atom
+.atom/
+
+# IDE — Nano
+*.save
+
+# IDE — TextMate
+*.tmproj
+*.tmproject
+.tm_properties
+
+# IDE — Eclipse
+.project
+.classpath
+.settings/
+.factorypath
+
+# IDE — Notepad++
+nppBackup/
+
+# Claude Code (local tool settings — not team config)
+.claude/
+
+# Python venv (if created locally for tooling)
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Build / Docker
+dist/
+
+# Helm — packaged charts and downloaded dependencies
+*.tgz
+deployment/charts/
+
+# Local Helm values overrides — may contain real passwords; never commit these
+values-local.yaml
+values-*.local.yaml
+*-local-values.yaml
+
+# TLS certificates and private keys
+*.pem
+*.key
+*.crt
+*.p12
+*.jks
+*.pfx
+
+# kubeconfig files saved locally
+kubeconfig
+*.kubeconfig
+
+# Common
+.env
+.env.*
+*.log
+.DS_Store
+Thumbs.db

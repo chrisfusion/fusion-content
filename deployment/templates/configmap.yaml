@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "fusion-content.labels" . | nindent 4 }}
+    app.kubernetes.io/component: server
+data:
+  HTTP_PORT: "8080"
+  POLL_INTERVAL: {{ .Values.server.config.pollInterval | quote }}
+  REPOS_CONFIG_FILE: {{ .Values.server.config.reposConfigFile | quote }}
+  GIT_CLONE_DIR: "/tmp/repos"
+  AUTH_ENABLED: {{ .Values.auth.enabled | quote }}
+  AUTH_AUDIENCE: {{ .Values.auth.audience | quote }}
+  AUTH_ALLOWED_SA: {{ .Values.auth.allowedServiceAccounts | join "," | quote }}

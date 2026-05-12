@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+apiVersion: v2
+name: fusion-content
+description: fusion-content — changelog aggregation service for the fusion platform
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+
+keywords:
+  - fusion
+  - changelog
+  - content

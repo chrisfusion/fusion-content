@@ -1,0 +1,115 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# =============================================================================
+# fusion-content — Helm Values
+# =============================================================================
+
+# Kubernetes namespace — must match the fusion platform namespace.
+namespace: fusion
+
+# Set to false if the namespace already exists (e.g. installed by another chart).
+createNamespace: false
+
+# Image pull secrets applied to server pods.
+imagePullSecrets: []
+
+# -----------------------------------------------------------------------------
+# Server — REST API (cmd/server, port 8080)
+# -----------------------------------------------------------------------------
+server:
+  image:
+    repository: fusion-content
+    tag: "local"
+    pullPolicy: IfNotPresent
+
+  replicas: 1
+
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 250m
+      memory: 128Mi
+
+  # Pod-level security context (spec.securityContext).
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 65532
+    fsGroup: 65532
+
+  # Container-level security context.
+  containerSecurityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop: ["ALL"]
+    readOnlyRootFilesystem: true
+
+  # Extra labels/annotations on the Deployment object (not pods).
+  deploymentLabels: {}
+  deploymentAnnotations: {}
+
+  # Extra labels/annotations on every pod.
+  podLabels: {}
+  podAnnotations: {}
+
+  # Node scheduling constraints.
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+  config:
+    # How often to pull each git repository (Go duration string).
+    pollInterval: "60s"
+    # Path to the repos YAML file inside the container.
+    # The file is mounted from the repos Secret at this path.
+    reposConfigFile: "/etc/fusion-content/repos.yaml"
+
+# -----------------------------------------------------------------------------
+# Authentication — K8s SA TokenReview
+#
+# When enabled the server calls the cluster TokenReview API to validate every
+# request to /api/v1/**. Health probes are always public.
+# Requires a ClusterRole allowing tokenreviews (provisioned automatically).
+# -----------------------------------------------------------------------------
+auth:
+  enabled: false
+  audience: ""
+  # Whitelist of service accounts allowed to call the API.
+  # Format: "namespace/name". Empty list = any valid SA token is accepted.
+  # Example:
+  #   allowedServiceAccounts:
+  #     - fusion/fusion-bff
+  allowedServiceAccounts: []
+
+# -----------------------------------------------------------------------------
+# Repos — git repositories to poll
+#
+# The repos config is stored in a K8s Secret (it may contain tokens).
+# Option A: supply sources here — the chart generates the Secret.
+# Option B: set existingSecret to the name of a pre-existing Secret whose
+#           "repos.yaml" key contains the repos YAML. This is preferred in
+#           production when using ESO or external secret management.
+# -----------------------------------------------------------------------------
+repos:
+  # If set, the chart mounts this Secret instead of generating one.
+  existingSecret: ""
+
+  # Inline repo list — only used when existingSecret is empty.
+  # Never commit real tokens here; use existingSecret in production.
+  sources: []
+  #  - name: fusion-forge
+  #    url: https://github.com/your-org/fusion-forge
+  #    token: ""            # omit or leave empty for public repos
+  #    changelogPath: CHANGELOG.md   # optional, this is the default
+
+# -----------------------------------------------------------------------------
+# Ingress (optional)
+# -----------------------------------------------------------------------------
+ingress:
+  enabled: false
+  className: nginx
+  host: content.fusion.local
+  annotations: {}
+  tls:
+    enabled: false
+    secretName: fusion-content-tls
