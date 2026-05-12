@@ -18,6 +18,14 @@ Changelog aggregation service: polls configurable git repositories on a configur
 - `make docker-build` — builds inside minikube (`eval $(minikube docker-env)` handled by Makefile)
 - `make run` — `go run ./cmd/server/`
 
+## Local minikube deploy
+- `make docker-build && helm upgrade --install fusion-content deployment/ -n fusion -f deployment/values-local.yaml`
+- `deployment/values-local.yaml` — local overrides; not committed with real tokens
+- Changelog sources for local dev: public repos `github.com/chrisfusion/fusion-{forge,index,spectra,bff}` (no token needed)
+- Do **not** try to serve host-filesystem repos via git daemon — use the public GitHub mirrors instead
+- Port-forward for testing: `kubectl port-forward -n fusion service/fusion-content 18082:8080`
+- `fusion` namespace already exists — `createNamespace: false` (the default) is correct
+
 ## Conventions (follow fusion-forge, not fusion-flux)
 - Health probes at `/q/health/live` and `/q/health/ready` (Quarkus path convention)
 - CORS: `GET,POST,PUT,DELETE,OPTIONS` — match platform standard even if only GET is exposed today
