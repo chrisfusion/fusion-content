@@ -11,11 +11,12 @@ import (
 	"fusion-platform.io/fusion-content/internal/api/handlers"
 	"fusion-platform.io/fusion-content/internal/api/middleware"
 	"fusion-platform.io/fusion-content/internal/config"
+	"fusion-platform.io/fusion-content/internal/helpstore"
 	"fusion-platform.io/fusion-content/internal/store"
 )
 
 // NewRouter wires up the Gin router with all routes and middleware.
-func NewRouter(s *store.Store, cfg *config.Config) *gin.Engine {
+func NewRouter(s *store.Store, hs *helpstore.Store, cfg *config.Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(corsMiddleware())
@@ -29,10 +30,13 @@ func NewRouter(s *store.Store, cfg *config.Config) *gin.Engine {
 	})
 
 	ch := &handlers.ChangelogHandler{Store: s}
+	hh := &handlers.HelpHandler{Store: hs}
 
 	v1 := r.Group("/api/v1")
 	v1.Use(middleware.NewAuthMiddleware(cfg))
 	v1.GET("/changelog", ch.List)
+	v1.GET("/help", hh.List)
+	v1.GET("/help/:service/:type/:slug", hh.Get)
 
 	return r
 }

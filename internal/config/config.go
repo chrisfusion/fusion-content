@@ -12,7 +12,7 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// RepoConfig describes a single git repository to poll.
+// RepoConfig describes a single git repository to poll for changelogs.
 type RepoConfig struct {
 	Name          string `yaml:"name"`
 	URL           string `yaml:"url"`
@@ -20,20 +20,32 @@ type RepoConfig struct {
 	ChangelogPath string `yaml:"changelogPath"`
 }
 
+// HelpConfig describes the single git repository used for help content.
+type HelpConfig struct {
+	URL   string `yaml:"url"`
+	Token string `yaml:"token"`
+	Dir   string `yaml:"dir"` // subdirectory within the repo; default "help"
+}
+
+// Enabled returns true when a help repo URL is configured.
+func (h HelpConfig) Enabled() bool { return h.URL != "" }
+
 type reposFile struct {
 	Repos []RepoConfig `yaml:"repos"`
+	Help  HelpConfig   `yaml:"help"`
 }
 
 // Config holds all runtime configuration loaded from environment variables.
 type Config struct {
-	Port           string
-	PollInterval   time.Duration
-	CloneBaseDir   string
+	Port            string
+	PollInterval    time.Duration
+	CloneBaseDir    string
 	ReposConfigFile string
-	AuthEnabled    bool
-	AuthAudience   string
-	AuthAllowedSAs []string
-	Repos          []RepoConfig
+	AuthEnabled     bool
+	AuthAudience    string
+	AuthAllowedSAs  []string
+	Repos           []RepoConfig
+	Help            HelpConfig
 }
 
 // Load reads configuration from environment variables and the repos YAML file.
@@ -56,15 +68,17 @@ func Load() *Config {
 		AuthAllowedSAs:  splitCSV(getEnv("AUTH_ALLOWED_SA", "")),
 	}
 
-	cfg.Repos = loadRepos(reposConfigFile)
+	repos, help := loadReposFile(reposConfigFile)
+	cfg.Repos = repos
+	cfg.Help = help
 	return cfg
 }
 
-func loadRepos(path string) []RepoConfig {
+func loadReposFile(path string) ([]RepoConfig, HelpConfig) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("content: cannot read repos config %s: %v", path, err)
-		return nil
+		return nil, HelpConfig{}
 	}
 
 	var rf reposFile
@@ -77,9 +91,15 @@ func loadRepos(path string) []RepoConfig {
 			rf.Repos[i].ChangelogPath = "CHANGELOG.md"
 		}
 	}
+	if rf.Help.Dir == "" {
+		rf.Help.Dir = "help"
+	}
 
 	log.Printf("content: loaded %d repo(s) from %s", len(rf.Repos), path)
-	return rf.Repos
+	if rf.Help.Enabled() {
+		log.Printf("content: help repo configured: %s", rf.Help.URL)
+	}
+	return rf.Repos, rf.Help
 }
 
 func getEnv(key, fallback string) string {

@@ -16,6 +16,9 @@ import (
 	"fusion-platform.io/fusion-content/internal/api"
 	appconfig "fusion-platform.io/fusion-content/internal/config"
 	"fusion-platform.io/fusion-content/internal/gitpoller"
+	"fusion-platform.io/fusion-content/internal/help"
+	"fusion-platform.io/fusion-content/internal/helppoller"
+	"fusion-platform.io/fusion-content/internal/helpstore"
 	"fusion-platform.io/fusion-content/internal/parser"
 	"fusion-platform.io/fusion-content/internal/store"
 )
@@ -29,13 +32,22 @@ func main() {
 		s.Update(project, entries)
 	})
 
+	hs := helpstore.New()
+
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
 
 	poller.Start(ctx)
 
+	if cfg.Help.Enabled() {
+		hp := helppoller.New(cfg.Help, cfg.PollInterval, cfg.CloneBaseDir, func(articles []help.Article) {
+			hs.Update(articles)
+		})
+		hp.Start(ctx)
+	}
+
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	srv := &http.Server{Addr: addr, Handler: api.NewRouter(s, cfg)}
+	srv := &http.Server{Addr: addr, Handler: api.NewRouter(s, hs, cfg)}
 
 	go func() {
 		log.Printf("starting fusion-content on %s (poll interval: %s, repos: %d)",

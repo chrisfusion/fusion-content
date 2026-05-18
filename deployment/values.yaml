@@ -103,6 +103,21 @@ repos:
   #    changelogPath: CHANGELOG.md   # optional, this is the default
 
 # -----------------------------------------------------------------------------
+# Help — structured Markdown help article repository (optional)
+#
+# The help repo must be organised as help/<service>/<type>/<slug>.md with
+# YAML frontmatter (title, tags, routes, summary). Diátaxis types:
+# tutorial | how-to | reference | explanation.
+#
+# Omit or leave url empty to disable the help feature entirely.
+# The help config is written into the same repos Secret as the changelog repos.
+# -----------------------------------------------------------------------------
+help:
+  url: ""
+  token: ""      # omit for public repos; HTTP personal access token for private
+  dir: "help"    # subdirectory within the repo containing the article tree
+
+# -----------------------------------------------------------------------------
 # Ingress (optional)
 # -----------------------------------------------------------------------------
 ingress:
