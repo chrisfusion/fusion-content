@@ -7,13 +7,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+## [0.2.0] — 2026-05-21
+
 ### Added
-- fusion-bff integration: proxied at `/api/content/*`; `content:changelog:read` permission required (granted to admin, engineer, and viewer roles)
 - Help content API: `GET /api/v1/help` (list/filter/full-text search) and `GET /api/v1/help/:service/:type/:slug` (full article with body); articles served from a dedicated git repo organised as `help/<service>/<type>/<slug>.md` (Diátaxis taxonomy: tutorial, how-to, reference, explanation) with YAML frontmatter (title, tags, routes, summary)
 - In-memory full-text inverted index for help articles: tokenised AND-intersection search across title, tags, summary, and body; rebuilt atomically on every poll cycle
 - Route-aware help filtering: `?route=<path>` returns articles whose `routes` frontmatter field contains the given frontend path
 - Shared git utility package (`internal/gitutil`): `SanitizeName`, `BuildAuth`, `EnsureRepo` (clone-or-pull-or-nuke); used by both the changelog and help pollers
 - Help repo configured via new `help:` section in the existing `repos.yaml` Secret (url, token, dir); feature is disabled when `help.url` is absent
+- fusion-bff integration: help endpoint proxied at `/api/content/api/v1/help*`; `content:help:read` permission required (granted to admin, engineer, and viewer roles in fusion-bff 0.4.2)
+- Unit tests for `internal/help` (article parsing, frontmatter, path validation) and `internal/helpstore` (query filters, full-text search, pagination, `Get`, `Update`)
 
 ---
 

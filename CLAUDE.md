@@ -33,6 +33,11 @@ Content API service: polls configurable git repositories, serves changelog entri
 - SPDX header on every `.go` file: `// SPDX-License-Identifier: GPL-3.0-or-later`
 - Auth middleware: K8s SA TokenReview — copy pattern from `../fusion-forge/internal/api/middleware/auth.go`
 - SA token re-read per request (kubelet rotates projected tokens — never cache it)
+- **Logging**: uses standard `log` package (`log.Printf`, `log.Fatalf`) throughout — do **not** migrate to `slog`
+
+## Tests
+- `go test ./... -race` — unit tests live alongside source in `internal/help/` and `internal/helpstore/`
+- No e2e tests currently
 
 ## Helm chart (deployment/)
 - Every component section must expose: `podSecurityContext`, `containerSecurityContext`, `deploymentLabels`, `deploymentAnnotations`, `podLabels`, `podAnnotations`
@@ -42,10 +47,15 @@ Content API service: polls configurable git repositories, serves changelog entri
 
 ## Help content (GET /api/v1/help)
 - Articles live in a dedicated git repo, organised as `help/<service>/<type>/<slug>.md`
+- Service identifier for fusion-content's own articles: `content` (not `fusion-content`)
 - Diátaxis types: `tutorial` | `how-to` | `reference` | `explanation` — type is derived from the directory name, not frontmatter
 - YAML frontmatter fields: `title`, `tags []string`, `routes []string` (frontend paths for context-sensitive help), `summary`
 - Full-text inverted index in `internal/helpstore`; search is AND-intersection over tokenised title+tags+summary+body
 - Adding a new content type: create `internal/<type>/`, `internal/<type>store/`, `internal/<type>poller/` (uses `gitutil`), handler; wire in `router.go` and `main.go`
+
+## Docs
+- `docs/help-tutorial.md` — authoring guide for help article writers (format, Diátaxis, series patterns, API verification)
+- `docs/examples/help/content/` — worked examples for all 4 Diátaxis types using the `content` service identifier
 
 ## CHANGELOG
 - Entry required before every commit — Keep-a-Changelog format
