@@ -21,6 +21,9 @@ import (
 	"fusion-platform.io/fusion-content/internal/helpstore"
 	"fusion-platform.io/fusion-content/internal/parser"
 	"fusion-platform.io/fusion-content/internal/store"
+	"fusion-platform.io/fusion-content/internal/video"
+	"fusion-platform.io/fusion-content/internal/videopoller"
+	"fusion-platform.io/fusion-content/internal/videostore"
 )
 
 func main() {
@@ -33,6 +36,7 @@ func main() {
 	})
 
 	hs := helpstore.New()
+	vs := videostore.New()
 
 	ctx, cancel := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer cancel()
@@ -46,8 +50,15 @@ func main() {
 		hp.Start(ctx)
 	}
 
+	if cfg.Videos.Enabled() {
+		vp := videopoller.New(cfg.Videos, cfg.PollInterval, cfg.CloneBaseDir, func(videos []video.Video) {
+			vs.Update(videos)
+		})
+		vp.Start(ctx)
+	}
+
 	addr := fmt.Sprintf(":%s", cfg.Port)
-	srv := &http.Server{Addr: addr, Handler: api.NewRouter(s, hs, cfg)}
+	srv := &http.Server{Addr: addr, Handler: api.NewRouter(s, hs, vs, cfg)}
 
 	go func() {
 		log.Printf("starting fusion-content on %s (poll interval: %s, repos: %d)",

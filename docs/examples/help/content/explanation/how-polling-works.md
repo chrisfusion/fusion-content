@@ -1,12 +1,13 @@
 ---
 title: "How polling works"
-summary: "Explains how fusion-content syncs changelog and help content from git repositories into its in-memory store, and what to expect around consistency and latency."
+summary: "Explains how fusion-content syncs changelog, help, and video content from git repositories into its in-memory store, and what to expect around consistency and latency."
 tags:
   - internals
   - git
   - polling
   - changelog
   - help
+  - video
 routes:
   - /admin/content
 ---
@@ -17,9 +18,9 @@ fusion-content has no database. All content lives in memory, rebuilt from git
 on every poll cycle. This design keeps the service stateless and deployable
 with a read-only root filesystem.
 
-## The two polling pipelines
+## The three polling pipelines
 
-fusion-content runs two independent polling pipelines in parallel:
+fusion-content runs three independent polling pipelines in parallel:
 
 ```
 Changelog pipeline (one goroutine per repo):
@@ -27,10 +28,15 @@ Changelog pipeline (one goroutine per repo):
 
 Help pipeline (one goroutine, one repo):
   git clone/pull  →  walk help/<service>/<type>/*.md  →  helpstore
+
+Video pipeline (one goroutine, one repo):
+  git clone/pull  →  walk videos/<service>/*.md  →  videostore
 ```
 
-The pipelines share `internal/gitutil.EnsureRepo` for clone/pull logic but
-are otherwise independent. A failure in one does not affect the other.
+All three pipelines share `internal/gitutil.EnsureRepo` for clone/pull logic
+but are otherwise independent. A failure in one does not affect the others.
+The help and video pipelines only start when their respective `url` is
+configured in the repos Secret.
 
 ## Startup behaviour
 
@@ -56,8 +62,8 @@ sees either the previous complete corpus or the new complete corpus — never a
 partial state. Concurrent reads during an update are not blocked; only the
 swap itself acquires the write lock briefly.
 
-The changelog store and help store are separate locks, so a slow help repo
-pull does not block changelog reads.
+The changelog, help, and video stores each have their own lock, so a slow
+pull in one pipeline does not block reads on the others.
 
 ## Latency from commit to live
 
@@ -78,11 +84,12 @@ count.
 
 ## Memory footprint
 
-The entire article corpus for all configured repos lives in RAM. For typical
-platform documentation volumes (hundreds of articles, moderate body sizes)
-this is well within the 128 Mi container limit. The help store also maintains
-an inverted index (token → article indices) which is rebuilt on every update;
-its overhead is proportional to the total word count across all articles.
+All content for all configured repos lives in RAM. For typical platform
+documentation volumes this is well within the 128 Mi container limit. The help
+store also maintains an inverted index (token → article indices) which is
+rebuilt on every update; its overhead is proportional to the total word count
+across all articles. The video store has no index — it stores only frontmatter
+fields, so its footprint is negligible even for large catalogues.
 
 ## Why not watch / webhooks
 

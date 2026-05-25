@@ -7,6 +7,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Video content API: `GET /api/v1/videos` (list with optional `?service=` filter, paginated) and `GET /api/v1/videos/:service/:slug` (single video; 404 if not found); videos are external-link metadata only — no media hosting
+- Video source repo polled via new `videos:` section in `repos.yaml` Secret (url, token, dir; feature disabled when `videos.url` is absent); files organised as `videos/<service>/<slug>.md` with YAML frontmatter (title, service, summary, thumbnailUrl, videoUrl, tags)
+- `internal/video/` (model + parser), `internal/videostore/` (thread-safe in-memory store), `internal/videopoller/` (git polling loop using `gitutil.EnsureRepo`); unit tests for store (query, service filter, pagination, get, update-replaces-corpus, empty-store)
+
 ## [0.2.0] — 2026-05-21
 
 ### Added

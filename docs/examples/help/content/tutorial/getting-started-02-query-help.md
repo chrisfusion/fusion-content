@@ -135,7 +135,12 @@ You can now:
 
 For the full parameter reference see [Help API query parameters](../reference/api-query-parameters).
 
+## Next step
+
+Continue to [part 3 — Query videos](getting-started-03-query-videos) to
+learn how to list and filter video metadata through the same service.
+
 ---
 
 **Series: Getting started with fusion-content**
-[← 1. Query the changelog](getting-started-01-query-changelog) · **2. Query help articles**
+[← 1. Query the changelog](getting-started-01-query-changelog) · **2. Query help articles** · [3. Query videos →](getting-started-03-query-videos)

@@ -1,7 +1,7 @@
 # fusion-content
 
 ## Project
-Content API service: polls configurable git repositories, serves changelog entries (Keep-a-Changelog format) and structured help articles (Diátaxis Markdown) via a paginated REST API. In-memory only — no database.
+Content API service: polls configurable git repositories, serves changelog entries (Keep-a-Changelog format), structured help articles (Diátaxis Markdown), and video metadata via a paginated REST API. In-memory only — no database.
 
 ## Ecosystem
 - **BFF**: `../fusion-bff` — proxies `/api/content/*` to this service; `content:changelog:read` permission required
@@ -36,7 +36,7 @@ Content API service: polls configurable git repositories, serves changelog entri
 - **Logging**: uses standard `log` package (`log.Printf`, `log.Fatalf`) throughout — do **not** migrate to `slog`
 
 ## Tests
-- `go test ./... -race` — unit tests live alongside source in `internal/help/` and `internal/helpstore/`
+- `go test ./... -race` — unit tests live alongside source in `internal/help/`, `internal/helpstore/`, `internal/videostore/`
 - No e2e tests currently
 
 ## Helm chart (deployment/)
@@ -52,6 +52,15 @@ Content API service: polls configurable git repositories, serves changelog entri
 - YAML frontmatter fields: `title`, `tags []string`, `routes []string` (frontend paths for context-sensitive help), `summary`
 - Full-text inverted index in `internal/helpstore`; search is AND-intersection over tokenised title+tags+summary+body
 - Adding a new content type: create `internal/<type>/`, `internal/<type>store/`, `internal/<type>poller/` (uses `gitutil`), handler; wire in `router.go` and `main.go`
+  - Config pattern: add `<Type>Config` struct (with `Enabled() bool` and `Dir string`) to `internal/config/config.go`; add field to `reposFile` and `Config`; grow `loadReposFile` return signature; set default `Dir`; log URL if `Enabled()`
+  - Clone dir: use hardcoded string `"fusion-<type>"` passed to `gitutil.SanitizeName` — not derived from the URL
+  - Path depth validation: use `strings.SplitN(path, "/", depth+2)` and check `len(parts) == depth+1` — using `depth+1` as the limit silently passes deeper paths
+
+## Video content (GET /api/v1/videos)
+- Videos live in a dedicated git repo, organised as `videos/<service>/<slug>.md` — exactly two levels (no subdirectories)
+- All metadata is in YAML frontmatter; no body text: `title`, `service`, `summary`, `thumbnailUrl`, `videoUrl`, `tags []string`
+- No full-text index — store supports only `?service=` filter and `/:service/:slug` lookup
+- Service values must match spectra activity-rail IDs: `data`, `weave`, `monitoring`, `forge`, `fusion-index`, `admin`
 
 ## Docs
 - `docs/help-tutorial.md` — authoring guide for help article writers (format, Diátaxis, series patterns, API verification)
@@ -74,6 +83,11 @@ help:
   url: https://github.com/org/fusion-docs
   token: ""
   dir: "help"            # subdirectory within the repo; default "help"
+
+videos:
+  url: https://github.com/org/fusion-videos
+  token: ""
+  dir: "videos"          # subdirectory within the repo; default "videos"
 ```
 Mounted from a K8s Secret at `REPOS_CONFIG_FILE` (default `/etc/fusion-content/repos.yaml`).
 Git clone dir: `GIT_CLONE_DIR` (default `/tmp/repos`) — must be on a writable volume.

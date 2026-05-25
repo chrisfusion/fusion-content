@@ -1,11 +1,12 @@
 ---
 title: "API query parameters"
-summary: "Complete reference for all query parameters accepted by the fusion-content changelog and help endpoints."
+summary: "Complete reference for all query parameters accepted by the fusion-content changelog, help, and video endpoints."
 tags:
   - api
   - reference
   - changelog
   - help
+  - video
 routes:
   - /admin/content
 ---
@@ -143,6 +144,60 @@ Returns a single article including the Markdown body.
 
 `body` is the raw Markdown text of the article, excluding the frontmatter block.
 Returns `404` if no article matches the identity triple.
+
+---
+
+---
+
+## GET /api/v1/videos
+
+Returns a paginated list of video metadata entries. All fields are present in
+list responses — there is no separate single-item endpoint needed for
+additional detail, but the `/:service/:slug` form is available for direct
+lookup.
+
+### Parameters
+
+| Parameter  | Type   | Description                                                                |
+|------------|--------|----------------------------------------------------------------------------|
+| `service`  | string | Exact match against the service directory name (e.g. `forge`). Optional. |
+| `page`     | int    | See above.                                                                 |
+| `pageSize` | int    | See above. Pagination is over individual video entries.                    |
+
+### Response shape
+
+```json
+{
+  "data": [
+    {
+      "service": "forge",
+      "slug": "forge-overview",
+      "title": "Fusion Forge Overview",
+      "summary": "A walkthrough of venv builds and GitOps polling",
+      "thumbnailUrl": "https://img.youtube.com/vi/XXXXXXXXXXX/hqdefault.jpg",
+      "videoUrl": "https://youtube.com/watch?v=XXXXXXXXXXX",
+      "tags": ["forge", "overview"]
+    }
+  ],
+  "pagination": { "page": 1, "pageSize": 20, "total": 8 }
+}
+```
+
+---
+
+## GET /api/v1/videos/:service/:slug
+
+Returns a single video entry. The response shape is identical to a single item
+from the list endpoint.
+
+### Path parameters
+
+| Parameter | Description                                                     |
+|-----------|-----------------------------------------------------------------|
+| `service` | Service identifier (matches directory name in the video repo)   |
+| `slug`    | File name without the `.md` extension                           |
+
+Returns `404` if no video matches the service and slug combination.
 
 ---
 

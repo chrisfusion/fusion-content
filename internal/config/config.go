@@ -30,9 +30,20 @@ type HelpConfig struct {
 // Enabled returns true when a help repo URL is configured.
 func (h HelpConfig) Enabled() bool { return h.URL != "" }
 
+// VideoConfig describes the single git repository used for video content.
+type VideoConfig struct {
+	URL   string `yaml:"url"`
+	Token string `yaml:"token"`
+	Dir   string `yaml:"dir"` // subdirectory within the repo; default "videos"
+}
+
+// Enabled returns true when a video repo URL is configured.
+func (v VideoConfig) Enabled() bool { return v.URL != "" }
+
 type reposFile struct {
-	Repos []RepoConfig `yaml:"repos"`
-	Help  HelpConfig   `yaml:"help"`
+	Repos  []RepoConfig `yaml:"repos"`
+	Help   HelpConfig   `yaml:"help"`
+	Videos VideoConfig  `yaml:"videos"`
 }
 
 // Config holds all runtime configuration loaded from environment variables.
@@ -46,6 +57,7 @@ type Config struct {
 	AuthAllowedSAs  []string
 	Repos           []RepoConfig
 	Help            HelpConfig
+	Videos          VideoConfig
 }
 
 // Load reads configuration from environment variables and the repos YAML file.
@@ -68,17 +80,18 @@ func Load() *Config {
 		AuthAllowedSAs:  splitCSV(getEnv("AUTH_ALLOWED_SA", "")),
 	}
 
-	repos, help := loadReposFile(reposConfigFile)
+	repos, help, videos := loadReposFile(reposConfigFile)
 	cfg.Repos = repos
 	cfg.Help = help
+	cfg.Videos = videos
 	return cfg
 }
 
-func loadReposFile(path string) ([]RepoConfig, HelpConfig) {
+func loadReposFile(path string) ([]RepoConfig, HelpConfig, VideoConfig) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		log.Printf("content: cannot read repos config %s: %v", path, err)
-		return nil, HelpConfig{}
+		return nil, HelpConfig{}, VideoConfig{}
 	}
 
 	var rf reposFile
@@ -94,12 +107,18 @@ func loadReposFile(path string) ([]RepoConfig, HelpConfig) {
 	if rf.Help.Dir == "" {
 		rf.Help.Dir = "help"
 	}
+	if rf.Videos.Dir == "" {
+		rf.Videos.Dir = "videos"
+	}
 
 	log.Printf("content: loaded %d repo(s) from %s", len(rf.Repos), path)
 	if rf.Help.Enabled() {
 		log.Printf("content: help repo configured: %s", rf.Help.URL)
 	}
-	return rf.Repos, rf.Help
+	if rf.Videos.Enabled() {
+		log.Printf("content: video repo configured: %s", rf.Videos.URL)
+	}
+	return rf.Repos, rf.Help, rf.Videos
 }
 
 func getEnv(key, fallback string) string {

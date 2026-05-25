@@ -13,10 +13,11 @@ import (
 	"fusion-platform.io/fusion-content/internal/config"
 	"fusion-platform.io/fusion-content/internal/helpstore"
 	"fusion-platform.io/fusion-content/internal/store"
+	"fusion-platform.io/fusion-content/internal/videostore"
 )
 
 // NewRouter wires up the Gin router with all routes and middleware.
-func NewRouter(s *store.Store, hs *helpstore.Store, cfg *config.Config) *gin.Engine {
+func NewRouter(s *store.Store, hs *helpstore.Store, vs *videostore.Store, cfg *config.Config) *gin.Engine {
 	r := gin.New()
 	r.Use(gin.Recovery())
 	r.Use(corsMiddleware())
@@ -31,12 +32,15 @@ func NewRouter(s *store.Store, hs *helpstore.Store, cfg *config.Config) *gin.Eng
 
 	ch := &handlers.ChangelogHandler{Store: s}
 	hh := &handlers.HelpHandler{Store: hs}
+	vh := &handlers.VideoHandler{Store: vs}
 
 	v1 := r.Group("/api/v1")
 	v1.Use(middleware.NewAuthMiddleware(cfg))
 	v1.GET("/changelog", ch.List)
 	v1.GET("/help", hh.List)
 	v1.GET("/help/:service/:type/:slug", hh.Get)
+	v1.GET("/videos", vh.List)
+	v1.GET("/videos/:service/:slug", vh.Get)
 
 	return r
 }
